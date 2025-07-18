@@ -52,7 +52,7 @@ model Transaction {
   // Estado: PENDING, COMPLETED, FAILED
   status        String   @default("PENDING")
   
-  // Integración Wompi
+ 
   wompiTransactionId String? @map("wompi_transaction_id")
   wompiReference     String? @map("wompi_reference")
   

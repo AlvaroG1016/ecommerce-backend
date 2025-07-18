@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { ProductModule } from './infrastructure/web/product.module';
 import { TransactionModule } from './infrastructure/web/transaction.module';
+import { PaymentModule } from './infrastructure/web/payment.module';
 
 @Module({
   imports: [
@@ -15,6 +16,8 @@ import { TransactionModule } from './infrastructure/web/transaction.module';
     DatabaseModule,
     ProductModule,
     TransactionModule,
+    PaymentModule,
+    
   ],
   controllers: [AppController],
   providers: [AppService],

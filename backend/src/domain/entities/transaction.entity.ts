@@ -84,6 +84,50 @@ export class Transaction {
     );
   }
 
+
+  public markAsPending(wompiTransactionId?: string, wompiReference?: string): Transaction {
+    return new Transaction(
+      this.id,
+      this.customerId,
+      this.productId,
+      this.productAmount,
+      this.baseFee,
+      this.deliveryFee,
+      this.totalAmount,
+      TransactionStatus.PENDING, // Mantener como PENDING
+      wompiTransactionId || this.wompiTransactionId,
+      wompiReference || this.wompiReference,
+      this.paymentMethod,
+      this.cardLastFour,
+      this.cardBrand,
+      this.createdAt,
+      new Date(), // updatedAt
+      undefined, // completedAt
+    );
+  }
+
+  
+  public updateProviderInfo(wompiTransactionId: string, wompiReference: string): Transaction {
+    return new Transaction(
+      this.id,
+      this.customerId,
+      this.productId,
+      this.productAmount,
+      this.baseFee,
+      this.deliveryFee,
+      this.totalAmount,
+      this.status, // Mantener estado actual
+      wompiTransactionId,
+      wompiReference,
+      this.paymentMethod,
+      this.cardLastFour,
+      this.cardBrand,
+      this.createdAt,
+      new Date(), // updatedAt
+      this.completedAt,
+    );
+  }
+
   public markAsFailed(): Transaction {
     if (!this.canBeProcessed()) {
       throw new Error(`Transaction ${this.id} cannot be failed. Current status: ${this.status}`);

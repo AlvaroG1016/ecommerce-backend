@@ -1,15 +1,11 @@
 import { Module } from '@nestjs/common';
 import { PaymentController } from './controllers/payment.controller';
 
-
 // Use Cases
-import { ProcessPaymentUseCase } from '../../domain/use-cases/process-payment/process-payment.use-case';
-import { GetTransactionStatusUseCase } from '../../domain/use-cases/process-payment/gettransactionstatus.use-case';
 
 // External Services
 import { PaymentProviderService } from '../external-services/payment-provider/payment-provider.service';
 import { PaymentServiceAdapter } from '../external-services/payment-provider/payment-service.adapter';
-
 
 // Repository implementations
 import { PrismaTransactionRepository } from '../database/repositories/prisma-transaction.repository';
@@ -19,26 +15,31 @@ import { PrismaProductRepository } from '../database/repositories/prisma-product
 import { PAYMENT_SERVICE } from '../../domain/services/payment.service.interface';
 import { TRANSACTION_REPOSITORY } from '../../domain/repositories/transaction.repository';
 import { PRODUCT_REPOSITORY } from '../../domain/repositories/product.repository';
+import { PaymentApplicationService } from 'src/application/services/payment-application.service';
+import { GetTransactionStatusUseCase } from 'src/application/use-cases/get-transaction-status/gettransactionstatus.use-case';
+import { ProcessPaymentUseCase } from 'src/application/use-cases/process-payment/process-payment.use-case';
+import { CUSTOMER_REPOSITORY } from 'src/domain/repositories/customer.repository';
+import { PrismaCustomerRepository } from '../database/repositories/prisma-customer.repository';
+import { UpdateProductStockUseCase } from 'src/application/use-cases/update-stock/update-product-stock.use-case';
 
 @Module({
-  controllers: [
-    PaymentController,
-  ],
+  controllers: [PaymentController],
   providers: [
     // Use Cases
     ProcessPaymentUseCase,
     GetTransactionStatusUseCase,
-    
+    UpdateProductStockUseCase,
     // ✅ External Services - Core
-    PaymentProviderService, // ✅ Asegúrate de incluir este
-    
-    
+    PaymentProviderService, 
+    //services
+    PaymentApplicationService,
+
     // Payment Service (PORT → ADAPTER)
     {
       provide: PAYMENT_SERVICE,
       useClass: PaymentServiceAdapter,
     },
-    
+
     // Repository implementations (PORTS → ADAPTERS)
     {
       provide: TRANSACTION_REPOSITORY,
@@ -48,11 +49,16 @@ import { PRODUCT_REPOSITORY } from '../../domain/repositories/product.repository
       provide: PRODUCT_REPOSITORY,
       useClass: PrismaProductRepository,
     },
+    {
+      provide: CUSTOMER_REPOSITORY,
+      useClass: PrismaCustomerRepository,
+    },
   ],
   exports: [
-    ProcessPaymentUseCase, 
+    ProcessPaymentUseCase,
     GetTransactionStatusUseCase,
-
+    
+    UpdateProductStockUseCase
   ],
 })
 export class PaymentModule {}

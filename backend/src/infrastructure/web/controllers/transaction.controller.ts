@@ -1,128 +1,95 @@
 import {
   Controller,
   Post,
-  Get,
   Body,
+  UseFilters,
+  UsePipes,
+  HttpCode,
+  HttpStatus,
+  Get,
   Param,
   ParseIntPipe,
-  HttpException,
-  HttpStatus,
-  ValidationPipe,
 } from '@nestjs/common';
-import { CreateTransactionUseCase } from '../../../domain/use-cases/create-transaction/create-transaction.use-case';
-import { PaymentMethod, CardBrand } from '../../../domain/entities/transaction.entity';
 
-// DTOs para validación web
-export class CreateTransactionWebDto {
-  customer: {
-    name: string;
-    email: string;
-    phone: string;
-  };
-
-  productId: number;
-  quantity?: number;
-
-  payment: {
-    method: PaymentMethod;
-    cardLastFour?: string;
-    cardBrand?: CardBrand;
-  };
-
-  delivery: {
-    address: string;
-    city: string;
-    postalCode?: string;
-    phone: string;
-  };
-}
+import { CreateTransactionWebDto } from '../dto/create-transaction-web.dto';
+import { HttpExceptionFilter } from '../filters/http-exception.filter';
+import { ValidationPipe } from '../pipes/validation.pipe';
+import { CreateTransactionUseCase } from 'src/application/use-cases/create-transaction/create-transaction.use-case';
+import { ResponseBuilderService } from 'src/application/services/response-builder.service';
+import { ApiResponseDto } from 'src/application/dto/response/api-response.dto';
+import { TransactionApplicationService } from 'src/application/services/transaction-application.service';
 
 @Controller('api/transactions')
+@UseFilters(HttpExceptionFilter)
 export class TransactionController {
   constructor(
-    private readonly createTransactionUseCase: CreateTransactionUseCase,
+    private readonly transactionService: TransactionApplicationService,
+    private readonly responseBuilder: ResponseBuilderService,
   ) {}
 
   @Post()
-  async createTransaction(@Body(ValidationPipe) body: CreateTransactionWebDto) {
-    const result = await this.createTransactionUseCase.execute({
-      customer: {
-        name: body.customer.name,
-        email: body.customer.email,
-        phone: body.customer.phone,
-      },
-      productId: body.productId,
-      quantity: body.quantity || 1,
-      payment: {
-        method: body.payment.method,
-        cardLastFour: body.payment.cardLastFour,
-        cardBrand: body.payment.cardBrand,
-      },
-      delivery: {
-        address: body.delivery.address,
-        city: body.delivery.city,
-        postalCode: body.delivery.postalCode,
-        phone: body.delivery.phone,
-      },
-    });
+  @HttpCode(HttpStatus.CREATED)
+  @UsePipes(ValidationPipe)
+  async createTransaction(
+    @Body() transactionData: CreateTransactionWebDto,
+  ): Promise<ApiResponseDto> {
+    debugger;
 
-    if (!result.isSuccess) {
-      throw new HttpException(
-        {
-          error: 'Failed to create transaction',
-          message: result.error?.message,
+    try {
+      debugger;
+      const request = {
+        customer: {
+          name: transactionData.customer.name,
+          email: transactionData.customer.email,
+          phone: transactionData.customer.phone,
         },
-        HttpStatus.BAD_REQUEST,
+        productId: transactionData.productId,
+        quantity: transactionData.quantity,
+        delivery: {
+          address: transactionData.delivery.address,
+          city: transactionData.delivery.city,
+          postalCode: transactionData.delivery.postalCode,
+          phone: transactionData.delivery.phone,
+        },
+        payment: {
+          method: transactionData.payment.method,
+          cardLastFour: transactionData.payment.cardLastFour,
+          cardBrand: transactionData.payment.cardBrand,
+        },
+      };
+
+      // (ROP - NEVER throws, always returns Result)
+      const result = await this.transactionService.createTransaction(request);
+
+      // Handle Result with ResponseBuilder (ROP)
+      if (!result.success) {
+        return this.responseBuilder.buildError(
+          result.error!,
+          'Transaction creation failed',
+          'TRANSACTION_FAILED',
+          {
+            nextStep: 'FIX_INPUT',
+            recommendation: 'Please check your data and try again',
+          },
+        );
+      }
+
+      return this.responseBuilder.buildSuccessWithEntities(
+        result.data!,
+        'Transaction created successfully',
+        {
+          nextStep: 'PROCEED_TO_PAYMENT',
+          recommendation: 'You can now proceed to pay for this transaction',
+        },
+      );
+    } catch (error) {
+      // ONLY unexpected errors reach here (infrastructure issues, bugs, etc.)
+      return this.responseBuilder.buildUnexpectedError(
+        error,
+        'TransactionController.createTransaction',
       );
     }
-
-    const response = result.value!;
-
-    return {
-      success: true,
-      data: {
-        transaction: response.transaction.toPrimitive(),
-        customer: response.customer.toPrimitive(),
-        product: response.product.toPrimitive(),
-        delivery: response.delivery.toPrimitive(),
-      },
-      metadata: {
-        timestamp: new Date().toISOString(),
-        status: 'PENDING',
-        nextStep: 'PAYMENT_PROCESSING',
-      },
-    };
   }
 
-  @Get(':id')
-  async getTransaction(@Param('id', ParseIntPipe) id: number) {
-    // TODO: Implementar GetTransactionByIdUseCase después
-    return {
-      success: true,
-      data: {
-        id,
-        status: 'PENDING',
-        message: 'Transaction details endpoint - TODO',
-      },
-      metadata: {
-        timestamp: new Date().toISOString(),
-      },
-    };
-  }
-
-  @Get()
-  async getTransactions() {
-    // TODO: Implementar GetTransactionsUseCase después
-    return {
-      success: true,
-      data: {
-        transactions: [],
-        total: 0,
-        message: 'List transactions endpoint - TODO',
-      },
-      metadata: {
-        timestamp: new Date().toISOString(),
-      },
-    };
-  }
+ 
 }

@@ -1,175 +1,106 @@
 import {
   Controller,
   Post,
-  Get,
   Body,
   Param,
   ParseIntPipe,
-  HttpException,
+  UseFilters,
+  UsePipes,
+  HttpCode,
   HttpStatus,
-  ValidationPipe,
+  Get,
 } from '@nestjs/common';
-import { ProcessPaymentUseCase } from '../../../domain/use-cases/process-payment/process-payment.use-case';
-import { GetTransactionStatusUseCase } from '../../../domain/use-cases/process-payment/gettransactionstatus.use-case';
 
-// DTOs para validación web
-export class ProcessPaymentWebDto {
-  cardNumber: string;
-  cardCvc: string;
-  cardExpMonth: string;
-  cardExpYear: string;
-  cardHolder: string;
-}
+import { ProcessPaymentWebDto } from '../dto/process-payment-web.dto';
+import { HttpExceptionFilter } from '../filters/http-exception.filter';
+import { ValidationPipe } from '../pipes/validation.pipe';
+import { PaymentApplicationService } from 'src/application/services/payment-application.service';
+import { ResponseBuilderService } from 'src/application/services/response-builder.service';
+import { ApiResponseDto } from 'src/application/dto/response/api-response.dto';
 
 @Controller('api/payment')
+@UseFilters(HttpExceptionFilter)
 export class PaymentController {
   constructor(
-    private readonly processPaymentUseCase: ProcessPaymentUseCase,
-    private readonly getTransactionStatusUseCase: GetTransactionStatusUseCase,
+    private readonly paymentApplicationService: PaymentApplicationService,
+    private readonly responseBuilder: ResponseBuilderService,
   ) {}
 
-  /**
-   * ENDPOINT: Procesar pago de una transacción
-   */
   @Post(':id/process-payment')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(ValidationPipe)
   async processPayment(
     @Param('id', ParseIntPipe) transactionId: number,
-    @Body(ValidationPipe) paymentData: ProcessPaymentWebDto,
-  ) {
-    console.log(`🎯 Processing payment for transaction ${transactionId}`);
+    @Body() paymentData: ProcessPaymentWebDto,
+  ): Promise<ApiResponseDto> {
+    try {
+      // 1. Prepare request
+      const request = {
+        transactionId,
+        cardNumber: paymentData.cardNumber,
+        cardCvc: paymentData.cardCvc,
+        cardExpMonth: paymentData.cardExpMonth,
+        cardExpYear: paymentData.cardExpYear,
+        cardHolder: paymentData.cardHolder,
+      };
 
-    const result = await this.processPaymentUseCase.execute({
-      transactionId,
-      cardNumber: paymentData.cardNumber,
-      cardCvc: paymentData.cardCvc,
-      cardExpMonth: paymentData.cardExpMonth,
-      cardExpYear: paymentData.cardExpYear,
-      cardHolder: paymentData.cardHolder,
-    });
+      const result =
+        await this.paymentApplicationService.processPayment(request);
 
-    if (!result.isSuccess) {
-      console.error(
-        `❌ Payment failed for transaction ${transactionId}:`,
-        result.error?.message,
+      if (!result.success) {
+        return this.responseBuilder.buildError(
+          result.error!,
+          `Payment processing for transaction ${transactionId}`,
+          'PAYMENT_FAILED',
+          {
+            nextStep: 'RETRY_PAYMENT',
+            recommendation: 'Please check your card details and try again',
+          },
+        );
+      }
+
+      return this.responseBuilder.buildSuccessWithEntities(
+        result.data!,
+        `Payment processed successfully for transaction ${transactionId}`,
+        this.getPaymentMetadata(result.data!),
       );
-
-      throw new HttpException(
-        {
-          error: 'Payment processing failed',
-          message: result.error?.message,
-          transactionId,
-        },
-        HttpStatus.BAD_REQUEST,
+    } catch (error) {
+      return this.responseBuilder.buildUnexpectedError(
+        error,
+        'PaymentController.processPayment',
+        { transactionId },
       );
     }
-
-    const response = result.value!;
-
-    console.log(`✅ Payment processed for transaction ${transactionId}:`, {
-      success: response.paymentSuccess,
-      status: response.transaction.status,
-      productStock: response.product.stock,
-    });
-
-    return {
-      success: true,
-      data: {
-        // Datos de la transacción actualizada
-        transaction: {
-          id: response.transaction.id,
-          status: response.transaction.status,
-          totalAmount: response.transaction.totalAmount,
-          formattedAmount: response.transaction.getFormattedAmount(),
-          providerTransactionId: response.transaction.wompiTransactionId,
-          providerReference: response.transaction.wompiReference,
-          completedAt: response.transaction.completedAt,
-        },
-
-        // Datos del producto (con stock actualizado)
-        product: {
-          id: response.product.id,
-          name: response.product.name,
-          stock: response.product.stock,
-          isAvailable: response.product.isAvailable(),
-        },
-
-        // Resultado del pago
-        payment: {
-          success: response.paymentSuccess,
-          message: response.message,
-        },
-      },
-      metadata: {
-        timestamp: new Date().toISOString(),
-        processedAt: response.transaction.completedAt,
-        nextStep: response.paymentSuccess ? 'SHOW_SUCCESS' : 'SHOW_ERROR',
-      },
-    };
   }
-
-  /**
-   * ✅ ENDPOINT IMPLEMENTADO: Consultar estado actual de un pago
-   * 
-   * Permite verificar si un pago PENDING se completó, falló o sigue pendiente
-   * Usa arquitectura hexagonal con GetTransactionStatusUseCase
-   */
-  @Get(':id/payment-status')
-  async getPaymentStatus(@Param('id', ParseIntPipe) transactionId: number) {
-    console.log(`🔍 Getting payment status for transaction ${transactionId}`);
-
-    const result = await this.getTransactionStatusUseCase.execute({
-      transactionId,
-    });
-
-    if (!result.isSuccess) {
-      console.error(
-        `❌ Failed to get payment status for transaction ${transactionId}:`,
-        result.error?.message,
-      );
-
-      // Determinar el tipo de error HTTP apropiado
-      const statusCode = result.error?.message.includes('not found') 
-        ? HttpStatus.NOT_FOUND 
-        : HttpStatus.INTERNAL_SERVER_ERROR;
-
-      throw new HttpException(
-        {
-          error: 'Failed to get payment status',
-          message: result.error?.message,
+  @Get(':id/status')
+  @HttpCode(HttpStatus.OK)
+  async getTransactionStatus(
+    @Param('id', ParseIntPipe) transactionId: number,
+  ): Promise<ApiResponseDto> {
+    try {
+      const result =
+        await this.paymentApplicationService.getTransactionStatus(
           transactionId,
-        },
-        statusCode,
-      );
-    }
+        );
 
-    const response = result.value!;
+      if (!result.success) {
+        const isNotFound = result.error!.includes('not found');
 
-    console.log(`✅ Payment status retrieved for transaction ${transactionId}:`, {
-      currentStatus: response.paymentStatus.currentStatus,
-      statusChanged: response.paymentStatus.statusChanged,
-      hasProviderInfo: !!response.paymentStatus.providerStatus,
-    });
+        return this.responseBuilder.buildError(
+          result.error!,
+          `Transaction status retrieval failed for ID ${transactionId}`,
+          isNotFound ? 'TRANSACTION_NOT_FOUND' : 'STATUS_RETRIEVAL_FAILED',
+          {
+            nextStep: isNotFound ? 'CHECK_TRANSACTION_ID' : 'RETRY_REQUEST',
+            recommendation: isNotFound
+              ? 'Please verify the transaction ID and try again'
+              : 'Please try again in a few moments',
+          },
+        );
+      }
 
-    // Determinar próximo paso según el estado
-    let nextStep = '';
-    switch (response.transaction.status) {
-      case 'COMPLETED':
-        nextStep = 'SHOW_SUCCESS';
-        break;
-      case 'PENDING':
-        nextStep = 'KEEP_CHECKING';
-        break;
-      case 'FAILED':
-        nextStep = 'SHOW_ERROR';
-        break;
-      default:
-        nextStep = 'UNKNOWN';
-    }
-
-    return {
-      success: true,
-      data: {
-        // Datos de la transacción
+      const response = result.data!;
+      const responseData = {
         transaction: {
           id: response.transaction.id,
           status: response.transaction.status,
@@ -180,22 +111,80 @@ export class PaymentController {
           createdAt: response.transaction.createdAt,
           completedAt: response.transaction.completedAt,
         },
-
-        // Estado del pago
-        payment: {
+        paymentStatus: {
           currentStatus: response.paymentStatus.currentStatus,
           message: response.paymentStatus.message,
           statusChanged: response.paymentStatus.statusChanged,
           providerInfo: response.paymentStatus.providerStatus,
         },
-      },
-      metadata: {
-        timestamp: new Date().toISOString(),
-        nextStep,
-        recommendation: response.transaction.status === 'PENDING' 
-          ? 'Check again in 10-30 seconds' 
-          : 'No further action needed',
-      },
+      };
+
+      const metadata = this.buildStatusMetadata(response);
+
+      return this.responseBuilder.buildSuccess(
+        responseData,
+        `Transaction status retrieved successfully for ID ${transactionId}`,
+        metadata,
+      );
+    } catch (error) {
+      return this.responseBuilder.buildUnexpectedError(
+        error,
+        'TransactionStatusController.getTransactionStatus',
+        { transactionId },
+      );
+    }
+  }
+  private buildStatusMetadata(response: any) {
+    const baseMetadata = {
+      statusChanged: response.paymentStatus.statusChanged,
+      hasProviderInfo: !!response.paymentStatus.providerInfo,
     };
+
+    switch (response.transaction.status) {
+      case 'COMPLETED':
+        return {
+          ...baseMetadata,
+          nextStep: 'SHOW_SUCCESS',
+          recommendation: 'Transaction completed successfully',
+        };
+      case 'PENDING':
+        return {
+          ...baseMetadata,
+          nextStep: 'KEEP_CHECKING',
+          recommendation: 'Check again in 10-30 seconds',
+        };
+      case 'FAILED':
+        return {
+          ...baseMetadata,
+          nextStep: 'SHOW_ERROR',
+          recommendation: 'Transaction failed - contact support if needed',
+        };
+      default:
+        return {
+          ...baseMetadata,
+          nextStep: 'CHECK_STATUS',
+          recommendation: 'Unknown status - please contact support',
+        };
+    }
+  }
+
+  private getPaymentMetadata(response: any) {
+    if (response.paymentSuccess) {
+      return {
+        nextStep: 'SHOW_SUCCESS',
+        recommendation: 'Payment completed successfully',
+        processedAt: response.transaction.completedAt,
+      };
+    } else if (response.requiresPolling) {
+      return {
+        nextStep: 'KEEP_CHECKING',
+        recommendation: 'Check payment status in 10-30 seconds',
+      };
+    } else {
+      return {
+        nextStep: 'SHOW_ERROR',
+        recommendation: 'Payment failed - please try again',
+      };
+    }
   }
 }

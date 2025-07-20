@@ -8,7 +8,7 @@ export class Customer {
   ) {}
 
   // Métodos de dominio (lógica de negocio)
-  
+
   public isValidEmail(): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(this.email);
@@ -24,14 +24,24 @@ export class Customer {
     return this.name.trim();
   }
 
+  // En customer.entity.ts
   public getMaskedEmail(): string {
     const [username, domain] = this.email.split('@');
-    const maskedUsername = username.charAt(0) + '*'.repeat(username.length - 2) + username.charAt(username.length - 1);
+
+    // ✅ Manejar usernames cortos
+    if (username.length <= 2) {
+      return this.email; // No enmascarar usernames muy cortos
+    }
+
+    const maskedUsername =
+      username.charAt(0) +
+      '*'.repeat(username.length - 2) +
+      username.charAt(username.length - 1);
     return `${maskedUsername}@${domain}`;
   }
 
   // Factory methods
-  
+
   static create(data: {
     name: string;
     email: string;
@@ -77,7 +87,7 @@ export class Customer {
   }
 
   // Serialización
-  
+
   public toPrimitive(): {
     id: number;
     name: string;

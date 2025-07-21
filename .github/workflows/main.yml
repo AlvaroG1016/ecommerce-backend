@@ -35,7 +35,15 @@ jobs:
           cp -r node_modules/@prisma dist/node_modules/
           zip -r backend.zip dist/
 
-      # Paso 3: Desplegar en Lambda
+      # Paso 3: Configurar AWS CLI
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # Paso 4: Desplegar en Lambda
       - name: Deploy Lambda function
         run: |
           aws lambda update-function-code --function-name backend --zip-file fileb://backend.zip

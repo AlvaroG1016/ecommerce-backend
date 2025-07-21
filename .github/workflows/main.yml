@@ -23,7 +23,7 @@ jobs:
           node-version: '20'  # Asegúrate de usar la versión adecuada
 
       - name: Install dependencies
-        run: npm install
+        run: npm install && npx prisma generate  # Instala las dependencias y genera el cliente Prisma
 
       # Paso 2: Compilar TypeScript
       - name: Build the project

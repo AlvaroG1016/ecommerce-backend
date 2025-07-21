@@ -40,6 +40,8 @@ module.exports = {
   externals: {
     // AWS SDK ya está disponible en el runtime de Lambda
     'aws-sdk': 'aws-sdk',
+      '@prisma/client': 'commonjs @prisma/client',
+  "prisma": 'commonjs prisma',
     '@aws-sdk/client-s3': '@aws-sdk/client-s3',
     '@aws-sdk/client-dynamodb': '@aws-sdk/client-dynamodb',
 

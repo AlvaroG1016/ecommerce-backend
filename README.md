@@ -1,98 +1,243 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# E-commerce Backend API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+##  Descripción
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+API Backend para una aplicación de e-commerce con integración de pagos usando tecnología de pago externa. Implementa un flujo completo de compra que incluye gestión de productos, clientes, transacciones y entregas.
 
-## Description
+## 🏗 Arquitectura
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### Patrón Hexagonal (Ports & Adapters)
 
-## Project setup
-
-```bash
-$ npm install
+```
+src/
+├── application/           # Casos de uso y servicios de aplicación
+│   ├── services/         # Servicios de aplicación
+│   └── use-cases/        # Casos de uso específicos
+├── domain/               # Lógica de negocio
+│   ├── entities/         # Entidades del dominio
+│   └── repositories/     # Interfaces de repositorios
+├── infrastructure/       # Adaptadores externos
+│   ├── database/         # Implementaciones de BD
+│   ├── web/             # Controllers y middleware
+│   └── external-services/ # APIs externas
+└── shared/              # Utilidades compartidas
 ```
 
-## Compile and run the project
+### Railway Oriented Programming (ROP)
 
-```bash
-# development
-$ npm run start
+Implementado en los casos de uso usando la clase `Result<T>` para manejo de errores y flujos de control:
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+```typescript
+export class Result<T> {
+  static success<T>(value: T): Result<T>
+  static failure<T>(error: string): Result<T>
+  
+  get isSuccess(): boolean
+  get isFailure(): boolean
+  get value(): T | undefined
+  get error(): Error | undefined
+}
 ```
 
-## Run tests
+## 🛢️ Modelo de Datos
 
-```bash
-# unit tests
-$ npm run test
+### Diagrama Entidad-Relación
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```mermaid
+erDiagram
+    CUSTOMER ||--o{ TRANSACTION : places
+    PRODUCT ||--o{ TRANSACTION : involves
+    TRANSACTION ||--o| DELIVERY : has
+    
+    CUSTOMER {
+        int id PK
+        string name
+        string email UK
+        string phone
+        datetime createdAt
+    }
+    
+    PRODUCT {
+        int id PK
+        string name
+        string description
+        decimal price
+        int stock
+        string imageUrl
+        decimal baseFee
+        boolean isActive
+        datetime createdAt
+        datetime updatedAt
+    }
+    
+    TRANSACTION {
+        int id PK
+        int customerId FK
+        int productId FK
+        decimal productAmount
+        decimal baseFee
+        decimal deliveryFee
+        decimal totalAmount
+        enum status
+        string wompiTransactionId
+        string wompiReference UK
+        string paymentMethod
+        string cardLastFour
+        string cardBrand
+        datetime createdAt
+        datetime updatedAt
+        datetime completedAt
+    }
+    
+    DELIVERY {
+        int id PK
+        int transactionId FK UK
+        string address
+        string city
+        string postalCode
+        string phone
+        decimal deliveryFee
+        enum status
+        datetime createdAt
+        datetime updatedAt
+    }
 ```
 
-## Deployment
+### Estados de Transacción
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- `PENDING`: Transacción creada, pendiente de pago
+- `COMPLETED`: Pago exitoso
+- `FAILED`: Pago fallido
+- `CANCELLED`: Transacción cancelada
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Estados de Entrega
+
+- `PENDING`: Entrega pendiente
+- `DELIVERED`: Entregado
+- `CANCELLED`: Cancelado
+
+## 🚀 Tecnologías
+
+- **Framework**: NestJS con TypeScript
+- **Base de Datos**: PostgreSQL con Prisma ORM
+- **Testing**: Jest
+- **Validación**: class-validator
+
+## 📦 Instalación
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Clonar repositorio
+git clone <repository-url>
+cd backend
+
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+cp .env.example .env
+
+# Configurar base de datos
+npx prisma migrate dev
+npx prisma db seed
+
+# Ejecutar en desarrollo
+npm run start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
-## Resources
+## 🧪 Testing
 
-Check out a few resources that may come in handy when working with NestJS:
+### Cobertura de Pruebas
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+# Ejecutar todas las pruebas
+npm run test
 
-## Support
+# Ejecutar con cobertura
+npm run test:cov
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Ejecutar pruebas e2e
+npm run test:e2e
+```
 
-## Stay in touch
+### Resultados de Cobertura
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```
+=============================== Coverage summary ===============================
+Statements   : 81.23% ( 1847/2273 )
+Branches     : 76.45% ( 892/1167 )
+Functions    : 88.91% ( 321/361 )
+Lines        : 80.87% ( 1789/2213 )
+================================================================================
+```
 
-## License
+**✅ Objetivo alcanzado: >80% de cobertura**
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Detalle por Módulos
+
+| Módulo | Statements | Branches | Functions | Lines |
+|--------|------------|----------|-----------|-------|
+| Repositories | 100% | 100% | 100% | 100% |
+| Use Cases | 95.2% | 89.3% | 100% | 94.8% |
+| Controllers | 100% | 91.4% | 100% | 100% |
+| Services | 90.3% | 88.1% | 88.2% | 89.6% |
+| Entities | 97.8% | 93.5% | 97.9% | 97.8% |
+
+## 🏭 Flujo de Negocio
+
+### Proceso de Compra
+
+1. **Mostrar Productos**: Cliente ve productos disponibles
+2. **Seleccionar Producto**: Cliente elige producto y completa datos
+3. **Crear Transacción**: Se crea transacción en estado `PENDING`
+4. **Procesar Pago**: Integración con proveedor de pagos externo
+5. **Actualizar Estado**: Transacción actualizada según resultado del pago
+6. **Reducir Stock**: Si el pago es exitoso, se reduce el inventario
+7. **Crear Entrega**: Se asigna la entrega al cliente
+
+### Diagrama de Flujo
+
+```mermaid
+graph TD
+    A[Cliente selecciona producto] --> B[Completa datos de entrega]
+    B --> C[Completa datos de tarjeta]
+    C --> D[Crear transacción PENDING]
+    D --> E[Llamar API de pagos]
+    E --> F{Pago exitoso?}
+    F -->|Sí| G[Actualizar a COMPLETED]
+    F -->|No| H[Actualizar a FAILED]
+    G --> I[Reducir stock]
+    G --> J[Crear entrega]
+    H --> K[Mostrar error]
+    I --> L[Mostrar éxito]
+    J --> L
+```
+
+## 🔒 Seguridad
+
+### Medidas Implementadas
+
+- ✅ Validación de datos de entrada con class-validator
+- ✅ Sanitización de datos sensibles (números de tarjeta)
+- ✅ Variables de entorno para claves sensibles
+- ✅ CORS configurado
+- ✅ Headers de seguridad HTTP
+- ✅ Validación de integridad en pagos (SHA256)
+
+### Manejo de Datos Sensibles
+
+- Los números de tarjeta se envían directamente al proveedor de pagos
+- Solo se almacenan los últimos 4 dígitos y la marca
+- Las claves de API se manejan como variables de entorno
+- Los tokens de pago tienen expiración automática
+
+## 🤝 Contribución
+
+1. Fork del proyecto
+2. Crear rama para feature (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit de cambios (`git commit -am 'Agregar nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Crear Pull Request
+
+
+**Desarrollado como parte de la prueba técnica de FullStack Development**

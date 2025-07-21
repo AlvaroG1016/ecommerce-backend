@@ -26,26 +26,16 @@ jobs:
         run: |
           npm install
           npx prisma generate
-          npm run build:lambda  # Este comando generará la carpeta dist con los archivos compilados
 
-      # Paso 2: Compilar TypeScript
-      - name: Build the project
-        run: npm run build:lambda  # Este comando generará la carpeta dist con los archivos compilados
-
-      # Paso 3: Empaquetar la Lambda
-      - name: Package Lambda function
+      # Paso 2: Compilar TypeScript y empaquetar
+      - name: Build and package
         run: |
-          npm run deploy  # Empaqueta los archivos de la función Lambda en un archivo zip
+          npm run build:lambda
+          cp -r node_modules/.prisma dist/
+          cp -r node_modules/@prisma dist/node_modules/
+          zip -r backend.zip dist/
 
-      # Paso 4: Configurar AWS CLI
-      - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}  # Usa tus credenciales AWS en los secrets
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1  # Asegúrate de usar la región correcta
-
-      # Paso 5: Desplegar en Lambda
+      # Paso 3: Desplegar en Lambda
       - name: Deploy Lambda function
         run: |
           aws lambda update-function-code --function-name backend --zip-file fileb://backend.zip

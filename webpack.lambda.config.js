@@ -41,8 +41,6 @@ module.exports = {
     // AWS SDK ya está disponible en el runtime de Lambda
   'express': 'express',
   '@vendia/serverless-express': '@vendia/serverless-express',
-  '@nestjs/platform-express': '@nestjs/platform-express',
-  'reflect-metadata': 'reflect-metadata',
   'rxjs': 'rxjs',
   'class-transformer': 'class-transformer',
   'class-validator': 'class-validator',

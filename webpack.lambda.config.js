@@ -132,6 +132,11 @@ module.exports = {
           to: path.resolve(__dirname, 'dist/node_modules/.prisma/client'),
           noErrorOnMissing: true,
         },
+        {
+          from: path.resolve(__dirname, 'node_modules/@prisma/client'),
+          to: path.resolve(__dirname, 'dist/node_modules/@prisma/client'),
+          noErrorOnMissing: true,
+        },
       ],
     }),
   ],

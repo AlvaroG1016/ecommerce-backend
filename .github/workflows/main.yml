@@ -22,8 +22,11 @@ jobs:
         with:
           node-version: '20'  # Asegúrate de usar la versión adecuada
 
-      - name: Install dependencies
-        run: npm install && npx prisma generate  # Instala las dependencias y genera el cliente Prisma
+      - name: Install dependencies and generate Prisma client
+        run: |
+          npm install
+          npx prisma generate
+          npm run build:lambda  # Este comando generará la carpeta dist con los archivos compilados
 
       # Paso 2: Compilar TypeScript
       - name: Build the project

@@ -45,4 +45,4 @@ jobs:
       # Paso 5: Desplegar en Lambda
       - name: Deploy Lambda function
         run: |
-          aws lambda update-function-code --function-name cinemahub-mngr --zip-file fileb://cinemahub-mngr.zip
+          aws lambda update-function-code --function-name backend --zip-file fileb://backend.zip

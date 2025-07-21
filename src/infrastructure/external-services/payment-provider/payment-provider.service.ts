@@ -160,7 +160,7 @@ export class PaymentProviderService {
 
   } catch (error) {
     // Log de errores con más detalles
-    console.error('❌ Failed to get acceptance token:');
+    console.error('❌ Failed to get acceptance token:',error);
     console.error('  Status:', error.response?.status);
     console.error('  Error Data:', JSON.stringify(error.response?.data, null, 2));
     console.error('  Request URL:', error.config?.url);

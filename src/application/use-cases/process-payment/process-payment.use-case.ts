@@ -59,7 +59,7 @@ export class ProcessPaymentUseCase {
 
     const cardValidation = this.validateTestCard(request.cardNumber);
     console.log('💳 Card validation result:', cardValidation);
-
+    console.log(" Request params WOMPI:", request,transaction,customer)
     const paymentResult = await this.processPaymentWithProvider(
       transaction, 
       request, 

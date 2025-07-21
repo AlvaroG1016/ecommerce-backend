@@ -1,11 +1,25 @@
+// lambda.ts - Nuevo archivo para el handler de Lambda
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ExpressAdapter } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+import { Handler, Context, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import * as express from 'express';
+import * as serverlessExpress from '@vendia/serverless-express';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+let cachedServer: any;
 
-  //  VALIDACIÓN GLOBAL
+async function createServer() {
+  if (cachedServer) {
+    return cachedServer;
+  }
+
+  const expressApp = express();
+  const adapter = new ExpressAdapter(expressApp);
+  
+  const app = await NestFactory.create(AppModule, adapter);
+
+  // VALIDACIÓN GLOBAL
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
@@ -13,53 +27,52 @@ async function bootstrap() {
     validateCustomDecorators: true,
   }));
 
-  //  CORS 
+  // CORS
   const frontendUrl = process.env.FRONTEND_URL;
   const isProduction = process.env.NODE_ENV === 'production';
   
   app.enableCors({
-    origin: isProduction 
-      ? [frontendUrl] 
-      : [frontendUrl, 'http://localhost:3000', 'http://localhost:3001'], 
+    origin: isProduction ? [frontendUrl] : [frontendUrl, 'http://localhost:3000', 'http://localhost:3001'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: false,
   });
 
-  //  HEADERS DE SEGURIDAD BÁSICOS
+  // HEADERS DE SEGURIDAD BÁSICOS
   app.use((req, res, next) => {
-    // Headers mínimos para OWASP
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     
     if (isProduction) {
       res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-      res.setHeader('X-Powered-By', ''); 
+      res.setHeader('X-Powered-By', '');
     }
-    
     next();
   });
 
-  //  RATE LIMITING 
+  // RATE LIMITING (más ligero para Lambda)
   if (isProduction) {
+    // En Lambda, el rate limiting se maneja mejor con AWS API Gateway
+    // Pero si quieres mantenerlo a nivel de aplicación:
     const { rateLimit } = await import('express-rate-limit');
     
     const limiter = rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 minutos
-      max: 100, // 100 requests por IP
+      windowMs: 15 * 60 * 1000,
+      max: 100,
       message: {
         error: 'Too many requests',
         message: 'Rate limit exceeded. Please try again later.',
       },
       standardHeaders: true,
       legacyHeaders: false,
+      // Para Lambda, es mejor usar un store en memoria o Redis
+      // skip: (req) => req.headers['x-forwarded-for'] === undefined, // Skip si no viene de API Gateway
     });
 
-    // Rate limiting más estricto para pagos
     const paymentLimiter = rateLimit({
-      windowMs: 5 * 60 * 1000, 
-      max: 10, 
+      windowMs: 5 * 60 * 1000,
+      max: 10,
       message: {
         error: 'Payment rate limit exceeded',
         message: 'Too many payment attempts. Please wait before trying again.',
@@ -68,13 +81,36 @@ async function bootstrap() {
 
     app.use(limiter);
     app.use('/api/payment', paymentLimiter);
-    
   }
 
-  const port = process.env.PORT || 3001;
-  await app.listen(port);
+  await app.init();
   
-
+  cachedServer = serverlessExpress({ app: expressApp });
+  
+  return cachedServer;
 }
 
-bootstrap();
+export const handler: Handler<APIGatewayProxyEvent, APIGatewayProxyResult> = async (
+  event: APIGatewayProxyEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> => {
+
+  context.callbackWaitsForEmptyEventLoop = false;
+  
+  try {
+    const server = await createServer();
+    return await server(event, context);
+  } catch (error) {
+    console.error('Lambda handler error:', error);
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        error: 'Internal Server Error',
+        message: 'An error occurred while processing the request',
+      }),
+    };
+  }
+};

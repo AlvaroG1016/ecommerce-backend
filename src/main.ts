@@ -5,7 +5,7 @@ import { ExpressAdapter } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { Handler, Context, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import * as express from 'express';
-import * as serverlessExpress from '@vendia/serverless-express';
+import createServerlessExpress from '@vendia/serverless-express';
 
 let cachedServer: any;
 
@@ -85,7 +85,7 @@ async function createServer() {
 
   await app.init();
   
-  cachedServer = serverlessExpress({ app: expressApp });
+  cachedServer = createServerlessExpress({ app: expressApp });
   
   return cachedServer;
 }

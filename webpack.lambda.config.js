@@ -39,8 +39,6 @@ module.exports = {
   // Módulos externos que NO deben ser incluidos en el bundle
   externals: {
     // AWS SDK ya está disponible en el runtime de Lambda
-  'express': 'express',
-  '@vendia/serverless-express': '@vendia/serverless-express',
     'aws-sdk': 'aws-sdk',
     '@aws-sdk/client-s3': '@aws-sdk/client-s3',
     '@aws-sdk/client-dynamodb': '@aws-sdk/client-dynamodb',

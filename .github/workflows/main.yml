@@ -31,9 +31,12 @@ jobs:
       - name: Build and package
         run: |
           npm run build:lambda
-          cp -r node_modules/.prisma dist/
-          cp -r node_modules/@prisma dist/node_modules/
-          zip -r backend.zip dist/
+          mkdir -p dist/node_modules/.prisma/client
+          mkdir -p dist/node_modules/@prisma/client
+          cp node_modules/.prisma/client/libquery_engine-* dist/node_modules/.prisma/client/
+          cp node_modules/.prisma/client/schema.prisma dist/node_modules/.prisma/client/
+          cp -r node_modules/@prisma/client/runtime dist/node_modules/@prisma/client/
+          cd dist && zip -r ../backend.zip .
 
       # Paso 3: Configurar AWS CLI
       - name: Configure AWS credentials

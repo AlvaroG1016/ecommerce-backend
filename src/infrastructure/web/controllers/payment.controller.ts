@@ -17,6 +17,7 @@ import { ValidationPipe } from '../pipes/validation.pipe';
 import { PaymentApplicationService } from 'src/application/services/payment-application.service';
 import { ResponseBuilderService } from 'src/application/services/response-builder.service';
 import { ApiResponseDto } from 'src/application/dto/response/api-response.dto';
+import { UpdateTransactionWithProviderResultDto } from '../dto/UpdateTransactionWithProviderResultDto';
 
 @Controller('api/payment')
 @UseFilters(HttpExceptionFilter)
@@ -73,6 +74,63 @@ export class PaymentController {
       );
     }
   }
+
+ @Post(':id/update-with-provider-result')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(ValidationPipe)
+  async updateTransactionWithProviderResult(
+    @Param('id', ParseIntPipe) transactionId: number,
+    @Body() providerResult: UpdateTransactionWithProviderResultDto,
+  ): Promise<ApiResponseDto> {
+    try {
+      console.log(`📥 Updating transaction ${transactionId} with external provider result from frontend`);
+      
+      const result = await this.paymentApplicationService.updateTransactionWithProviderResult(
+        transactionId,
+        {
+          providerTransactionId: providerResult.providerTransactionId,
+          providerStatus: providerResult.providerStatus,
+          providerMessage: providerResult.providerMessage,
+          providerReference: providerResult.providerReference,
+          providerProcessedAt: new Date(providerResult.providerProcessedAt),
+          amountInCents: providerResult.amountInCents,
+          currency: providerResult.currency,
+        }
+      );
+
+      if (!result.success) {
+        return this.responseBuilder.buildError(
+          result.error!,
+          `Failed to update transaction ${transactionId} with provider result`,
+          'TRANSACTION_UPDATE_FAILED',
+          {
+            nextStep: 'CHECK_TRANSACTION_STATUS',
+            recommendation: 'Payment may have been processed. Check transaction status.',
+          },
+        );
+      }
+
+      return this.responseBuilder.buildSuccessWithEntities(
+        result.data!,
+        `Transaction ${transactionId} updated successfully with provider result`,
+        {
+          nextStep: result.data!.paymentSuccess ? 'SHOW_SUCCESS' : 'SHOW_ERROR',
+          recommendation: result.data!.paymentSuccess 
+            ? 'Payment completed successfully'
+            : 'Payment was not successful',
+          externallyProcessed: true,
+          stockUpdated: result.data!.stockUpdated || false,
+        },
+      );
+    } catch (error) {
+      return this.responseBuilder.buildUnexpectedError(
+        error,
+        'PaymentController.updateTransactionWithProviderResult',
+        { transactionId },
+      );
+    }
+  }
+
   @Get(':id/status')
   @HttpCode(HttpStatus.OK)
   async getTransactionStatus(

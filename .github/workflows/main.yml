@@ -27,7 +27,7 @@ jobs:
 
       # Paso 2: Compilar TypeScript
       - name: Build the project
-        run: npm run build  # Este comando generará la carpeta dist con los archivos compilados
+        run: npm run build:lambda  # Este comando generará la carpeta dist con los archivos compilados
 
       # Paso 3: Empaquetar la Lambda
       - name: Package Lambda function

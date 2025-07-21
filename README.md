@@ -23,6 +23,10 @@ src/
 └── shared/              # Utilidades compartidas
 ```
 
+## 🏗 Arquitectura Cloud
+<img width="1280" height="805" alt="image" src="https://github.com/user-attachments/assets/5f4c3dea-fed7-45e4-92dc-d6a4c32b6a4b" />
+
+
 ### Railway Oriented Programming (ROP)
 
 Implementado en los casos de uso usando la clase `Result<T>` para manejo de errores y flujos de control:

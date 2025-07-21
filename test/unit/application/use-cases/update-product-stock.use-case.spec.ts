@@ -502,8 +502,19 @@ describe('UpdateProductStockUseCase', () => {
       // Verify call sequence
       expect(mockTransactionRepository.findById).toHaveBeenCalledWith(10);
       expect(mockProductRepository.findById).toHaveBeenCalledWith(3);
-      expect(mockProductRepository.save).toHaveBeenCalledWith(finalProduct);
-    });
+expect(mockProductRepository.save).toHaveBeenCalledWith(
+  expect.objectContaining({
+    id: 3,
+    name: 'Active Product',
+    description: 'Ready for sale',
+    price: 75000,
+    stock: 21,
+    imageUrl: 'https://active.jpg',
+    baseFee: 3750,
+    isActive: true,
+    updatedAt: expect.any(Date),
+  })
+);    });
   });
 
   describe('Unexpected Errors', () => {

@@ -40,6 +40,7 @@ describe('PaymentController', () => {
       cardExpMonth: '12',
       cardExpYear: '2025',
       cardHolder: 'John Doe',
+      installments: 1, // ✅ AGREGADO: campo faltante
     };
 
     it('should process payment successfully', async () => {
@@ -81,6 +82,7 @@ describe('PaymentController', () => {
         cardExpMonth: '12',
         cardExpYear: '2025',
         cardHolder: 'John Doe',
+        installments: 1, // ✅ CORREGIDO: ahora coincide con lo que envía el controlador
       });
       expect(mockResponseBuilderService.buildSuccessWithEntities).toHaveBeenCalledWith(
         mockServiceResponse.data,
@@ -91,6 +93,41 @@ describe('PaymentController', () => {
           processedAt: mockServiceResponse.data.transaction.completedAt,
         }
       );
+    });
+
+    // ✅ NUEVO TEST: Verificar installments con diferentes valores
+    it('should process payment with custom installments', async () => {
+      const transactionId = 1;
+      const customPaymentData = {
+        ...mockPaymentData,
+        installments: 3, // Prueba con 3 cuotas
+      };
+
+      const mockServiceResponse = {
+        success: true,
+        data: {
+          transaction: { id: 1, status: 'COMPLETED', completedAt: new Date() },
+          product: { id: 1, name: 'iPhone' },
+          paymentSuccess: true,
+          message: 'Payment successful',
+          requiresPolling: false,
+        },
+      };
+
+      mockPaymentApplicationService.processPayment.mockResolvedValue(mockServiceResponse);
+      mockResponseBuilderService.buildSuccessWithEntities.mockReturnValue({ success: true });
+
+      await controller.processPayment(transactionId, customPaymentData);
+
+      expect(mockPaymentApplicationService.processPayment).toHaveBeenCalledWith({
+        transactionId: 1,
+        cardNumber: '4242424242424242',
+        cardCvc: '123',
+        cardExpMonth: '12',
+        cardExpYear: '2025',
+        cardHolder: 'John Doe',
+        installments: 3, // ✅ Verifica que se pase correctamente
+      });
     });
 
     it('should handle payment requiring polling', async () => {

@@ -38,7 +38,7 @@ export const handler: Handler = async (event, context, callback) => {
 if (process.env.NODE_ENV !== 'production' && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
   (async () => {
     const app = await createApp();
-    await app.listen(3000, '0.0.0.0');
+    await app.listen(3001, '0.0.0.0');
     console.log(`🚀 Server running on http://localhost:3000`);
   })();
 }

@@ -287,8 +287,8 @@ export class PaymentProviderService {
     installments?: number;
   }): Promise<PaymentProviderResponse> {
     try {
-
-      const merchantInfo = await this.getAcceptanceTokenSimple();
+      debugger
+      const merchantInfo = await this.getAcceptanceToken();
 console.log('🏪 Merchant info retrieved:', merchantInfo.data.id);
       const cardToken = await this.createCardToken(paymentData.cardData);
       console.log('💳 Card token created:', cardToken.data.id);

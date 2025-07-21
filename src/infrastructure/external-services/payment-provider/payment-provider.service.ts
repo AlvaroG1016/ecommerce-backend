@@ -66,7 +66,12 @@ export class PaymentProviderService {
     this.publicKey = process.env.PAYMENT_PROVIDER_PUBLIC_KEY!;
     this.integrityKey = process.env.PAYMENT_PROVIDER_INTEGRITY_KEY!; 
     this.sandboxUrl = process.env.PAYMENT_PROVIDER_SANDBOX_URL!;
-
+    console.log('🔑 PaymentProviderService initialized with keys:', {
+      privateKey: this.privateKey?.substring(0, 20) + '...',
+      publicKey: this.publicKey?.substring(0, 20) + '...',
+      integrityKey: this.integrityKey?.substring(0, 20) + '...',
+      sandboxUrl: this.sandboxUrl
+    });
 
     this.httpClient = axios.create({
       baseURL: this.sandboxUrl,
@@ -111,7 +116,7 @@ export class PaymentProviderService {
 
   async getAcceptanceToken(): Promise<WompiMerchantInfo> {
     try {
-      console.log('🎫 Getting acceptance token from merchant info...');
+      console.log('🎫 Getting acceptance token from merchant info...',this.publicKey);
       
       const response = await this.httpClient.get<WompiMerchantInfo>(
         `/merchants/${this.publicKey}`,
@@ -122,7 +127,7 @@ export class PaymentProviderService {
         }
       );
 
-    
+    console.log('🏪 Acceptance token retrieved:', response);
       return response.data;
 
     } catch (error) {

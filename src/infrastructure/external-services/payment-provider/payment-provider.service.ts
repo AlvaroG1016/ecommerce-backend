@@ -141,6 +141,33 @@ export class PaymentProviderService {
     }
   }
 
+  async getAcceptanceTokenSimple(): Promise<any> {
+  try {
+    const endpoint = `${this.sandboxUrl}/merchants/${this.publicKey}`;
+    const headers = {
+      'Authorization': `Bearer ${this.publicKey}`,
+    };
+
+    // Imprimimos la URL y los headers antes de hacer la solicitud
+    console.log('🔑 Sending request to get acceptance token with URL:', endpoint);
+    console.log('🔑 Headers:', headers);
+
+    // Realizamos la solicitud de prueba
+    const response = await this.httpClient.get(endpoint, { headers });
+    
+    // Imprimimos la respuesta para ver si hay algún error
+    console.log('🎉 Response received:', response.data);
+
+  } catch (error) {
+    // Log de errores con más detalles
+    console.error('❌ Failed to get acceptance token:');
+    console.error('  Status:', error.response?.status);
+    console.error('  Error Data:', JSON.stringify(error.response?.data, null, 2));
+    console.error('  Request URL:', error.config?.url);
+    console.error('  Public Key used:', this.publicKey?.substring(0, 20) + '...');
+  }
+}
+
 
   async createCardToken(cardData: {
     number: string;
@@ -261,7 +288,7 @@ export class PaymentProviderService {
   }): Promise<PaymentProviderResponse> {
     try {
 
-      const merchantInfo = await this.getAcceptanceToken();
+      const merchantInfo = await this.getAcceptanceTokenSimple();
 console.log('🏪 Merchant info retrieved:', merchantInfo.data.id);
       const cardToken = await this.createCardToken(paymentData.cardData);
       console.log('💳 Card token created:', cardToken.data.id);

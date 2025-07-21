@@ -41,9 +41,6 @@ module.exports = {
     // AWS SDK ya está disponible en el runtime de Lambda
   'express': 'express',
   '@vendia/serverless-express': '@vendia/serverless-express',
-  'rxjs': 'rxjs',
-  'class-transformer': 'class-transformer',
-  'class-validator': 'class-validator',
     'aws-sdk': 'aws-sdk',
     '@aws-sdk/client-s3': '@aws-sdk/client-s3',
     '@aws-sdk/client-dynamodb': '@aws-sdk/client-dynamodb',

@@ -259,13 +259,13 @@ export class PaymentProviderService {
       const merchantInfo = await this.getAcceptanceToken();
 
       const cardToken = await this.createCardToken(paymentData.cardData);
-
+      console.log('💳 Card token created:', cardToken.data.id);
       const signature = this.generateIntegritySignature({
         reference: paymentData.reference,
         amount_in_cents: paymentData.amount_in_cents,
         currency: paymentData.currency,
       });
-
+console.log('🔑 Integrity signature generated:', signature);
       const paymentRequest: PaymentProviderRequest = {
         amount_in_cents: paymentData.amount_in_cents,
         currency: paymentData.currency,

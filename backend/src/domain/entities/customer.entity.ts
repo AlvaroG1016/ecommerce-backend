@@ -7,7 +7,6 @@ export class Customer {
     public readonly createdAt: Date = new Date(),
   ) {}
 
-  // Métodos de dominio (lógica de negocio)
 
   public isValidEmail(): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,7 +14,6 @@ export class Customer {
   }
 
   public isValidPhone(): boolean {
-    // Validar formato colombiano: +57 XXX XXX XXXX
     const phoneRegex = /^\+57\s\d{3}\s\d{3}\s\d{4}$/;
     return phoneRegex.test(this.phone);
   }
@@ -24,13 +22,11 @@ export class Customer {
     return this.name.trim();
   }
 
-  // En customer.entity.ts
   public getMaskedEmail(): string {
     const [username, domain] = this.email.split('@');
 
-    // ✅ Manejar usernames cortos
     if (username.length <= 2) {
-      return this.email; // No enmascarar usernames muy cortos
+      return this.email; 
     }
 
     const maskedUsername =
@@ -40,7 +36,6 @@ export class Customer {
     return `${maskedUsername}@${domain}`;
   }
 
-  // Factory methods
 
   static create(data: {
     name: string;
@@ -48,13 +43,12 @@ export class Customer {
     phone: string;
   }): Customer {
     const customer = new Customer(
-      0, // ID será asignado por la base de datos
+      0, 
       data.name.trim(),
       data.email.toLowerCase().trim(),
       data.phone.trim(),
     );
 
-    // Validaciones de dominio
     if (!customer.isValidEmail()) {
       throw new Error('Invalid email format');
     }
@@ -86,7 +80,6 @@ export class Customer {
     );
   }
 
-  // Serialización
 
   public toPrimitive(): {
     id: number;

@@ -14,7 +14,7 @@ async function bootstrap() {
   }));
 
   //  CORS 
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const frontendUrl = process.env.FRONTEND_URL;
   const isProduction = process.env.NODE_ENV === 'production';
   
   app.enableCors({
@@ -43,7 +43,6 @@ async function bootstrap() {
 
   //  RATE LIMITING 
   if (isProduction) {
-    // Solo aplicar en producción para evitar problemas en desarrollo
     const { rateLimit } = await import('express-rate-limit');
     
     const limiter = rateLimit({
@@ -70,17 +69,12 @@ async function bootstrap() {
     app.use(limiter);
     app.use('/api/payment', paymentLimiter);
     
-    console.log('🔒 Rate limiting enabled for production');
   }
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
   
-  console.log(`🚀 Application running on port ${port}`);
-  console.log(`🌐 CORS configured for: ${frontendUrl}`);
-  console.log(`🔒 Security headers applied`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`💳 Payment provider: ${process.env.PAYMENT_PROVIDER_SANDBOX_URL ? 'Wompi Sandbox' : 'Not configured'}`);
+
 }
 
 bootstrap();

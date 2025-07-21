@@ -79,8 +79,8 @@ export class Transaction {
       this.cardLastFour,
       this.cardBrand,
       this.createdAt,
-      new Date(), // updatedAt
-      new Date(), // completedAt
+      new Date(), 
+      new Date(), 
     );
   }
 
@@ -94,15 +94,15 @@ export class Transaction {
       this.baseFee,
       this.deliveryFee,
       this.totalAmount,
-      TransactionStatus.PENDING, // Mantener como PENDING
+      TransactionStatus.PENDING, 
       wompiTransactionId || this.wompiTransactionId,
       wompiReference || this.wompiReference,
       this.paymentMethod,
       this.cardLastFour,
       this.cardBrand,
       this.createdAt,
-      new Date(), // updatedAt
-      undefined, // completedAt
+      new Date(), 
+      undefined, 
     );
   }
 
@@ -116,7 +116,7 @@ export class Transaction {
       this.baseFee,
       this.deliveryFee,
       this.totalAmount,
-      this.status, // Mantener estado actual
+      this.status, 
       wompiTransactionId,
       wompiReference,
       this.paymentMethod,
@@ -160,7 +160,6 @@ export class Transaction {
     }).format(this.totalAmount);
   }
 
-  // Factory methods
   
   static create(data: {
     customerId: number;
@@ -174,7 +173,6 @@ export class Transaction {
   }): Transaction {
     const totalAmount = data.productAmount + data.baseFee + data.deliveryFee;
 
-    // Validaciones de dominio
     if (data.productAmount <= 0) {
       throw new Error('Product amount must be greater than 0');
     }
@@ -188,7 +186,7 @@ export class Transaction {
     }
 
     return new Transaction(
-      0, // ID será asignado por la base de datos
+      0, 
       data.customerId,
       data.productId,
       data.productAmount,

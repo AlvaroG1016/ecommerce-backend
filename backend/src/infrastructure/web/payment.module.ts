@@ -1,17 +1,13 @@
 import { Module } from '@nestjs/common';
 import { PaymentController } from './controllers/payment.controller';
 
-// Use Cases
 
-// External Services
 import { PaymentProviderService } from '../external-services/payment-provider/payment-provider.service';
 import { PaymentServiceAdapter } from '../external-services/payment-provider/payment-service.adapter';
 
-// Repository implementations
 import { PrismaTransactionRepository } from '../database/repositories/prisma-transaction.repository';
 import { PrismaProductRepository } from '../database/repositories/prisma-product.repository';
 
-// Repository interfaces (symbols)
 import { PAYMENT_SERVICE } from '../../domain/services/payment.service.interface';
 import { TRANSACTION_REPOSITORY } from '../../domain/repositories/transaction.repository';
 import { PRODUCT_REPOSITORY } from '../../domain/repositories/product.repository';
@@ -25,13 +21,10 @@ import { UpdateProductStockUseCase } from 'src/application/use-cases/update-stoc
 @Module({
   controllers: [PaymentController],
   providers: [
-    // Use Cases
     ProcessPaymentUseCase,
     GetTransactionStatusUseCase,
     UpdateProductStockUseCase,
-    // ✅ External Services - Core
     PaymentProviderService, 
-    //services
     PaymentApplicationService,
 
     // Payment Service (PORT → ADAPTER)

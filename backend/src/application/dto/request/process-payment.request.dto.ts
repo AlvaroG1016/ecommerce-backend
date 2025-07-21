@@ -5,4 +5,5 @@ export interface ProcessPaymentRequest {
   cardExpMonth: string;
   cardExpYear: string;
   cardHolder: string;
+  installments?: number;
 }

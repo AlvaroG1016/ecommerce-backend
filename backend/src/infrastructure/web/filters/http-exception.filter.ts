@@ -18,7 +18,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
     debugger
-    // Extraer el mensaje del error
     const errorResponse = exception.getResponse();
     let message = 'Internal server error';
 
@@ -33,7 +32,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
       method: request.method,
     });
 
-    // Crear respuesta usando ApiResponse
     const apiResponse = ApiResponse.error(
       message,
       `HTTP_${status}`,

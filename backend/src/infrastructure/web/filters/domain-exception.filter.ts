@@ -17,7 +17,6 @@ export class DomainExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    // Mapear errores de dominio a códigos HTTP
     const statusCode = this.getStatusCode(exception);
     
     this.logger.error(`Domain Exception: ${exception.message}`, {
@@ -26,7 +25,6 @@ export class DomainExceptionFilter implements ExceptionFilter {
       stack: exception.stack,
     });
 
-    // ✅ Usar ApiResponse.error con metadata específica
     const apiResponse = ApiResponse.error(
       exception.message,
       'DOMAIN_ERROR',

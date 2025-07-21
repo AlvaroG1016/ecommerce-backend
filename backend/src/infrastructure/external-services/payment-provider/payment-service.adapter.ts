@@ -7,9 +7,7 @@ import {
 } from '../../../domain/services/payment.service.interface';
 import { PaymentProviderService, PaymentProviderRequest } from './payment-provider.service';
 
-/**
- * ADAPTER corregido para manejar mejor los estados del API
- */
+
 @Injectable()
 export class PaymentServiceAdapter implements PaymentService {
   constructor(
@@ -21,11 +19,9 @@ export class PaymentServiceAdapter implements PaymentService {
       console.log('🔄 PaymentAdapter: Starting payment process...');
       console.log('💰 Amount to process:', request.amount, 'COP');
 
-      //  NUEVO: Validar tarjeta de prueba antes de enviar
       const cardValidation = this.validateTestCard(request.cardNumber);
       console.log('💳 Card validation:', cardValidation);
 
-      // Usar el método completo automático
       const result = await this.paymentProvider.processPaymentWithNewCard({
         amount_in_cents: this.paymentProvider.convertToCents(request.amount),
         currency: request.currency,
@@ -38,31 +34,20 @@ export class PaymentServiceAdapter implements PaymentService {
           exp_year: request.cardExpYear,
           card_holder: request.cardHolder,
         },
-        installments: 1,
+        installments: request.installments,
       });
 
-      console.log('📥 PaymentAdapter: Provider response received');
-      console.log('  Status:', result.data.status);
-      console.log('  ID:', result.data.id);
-      console.log('  Message:', result.data.status_message);
-
-      //  MEJORADO: Mapear respuesta con mejor logging
+    
       const mappedResult = this.mapProviderResponseToDomain(result, result.data.reference);
-      
-      console.log('🔄 PaymentAdapter: Mapped result:', {
-        success: mappedResult.success,
-        status: mappedResult.status,
-        message: mappedResult.message,
-      });
+
 
       return mappedResult;
 
     } catch (error) {
       console.error('❌ PaymentAdapter: Payment processing failed:', error);
       
-      //  MEJORADO: Mejor manejo de errores específicos
       let errorMessage = 'Payment processing error';
-      let errorStatus: PaymentStatus = PaymentStatus.ERROR; //  Usar enum
+      let errorStatus: PaymentStatus = PaymentStatus.ERROR; 
 
       if (error.response?.data) {
         const errorData = error.response.data;
@@ -70,9 +55,8 @@ export class PaymentServiceAdapter implements PaymentService {
         
         if (errorData.error) {
           errorMessage = errorData.error.reason || errorData.error.messages_key || 'Provider error';
-          // Algunos errores específicos pueden indicar diferentes estados
           if (errorMessage.includes('declined') || errorMessage.includes('insufficient')) {
-            errorStatus = PaymentStatus.DECLINED; // Usar enum
+            errorStatus = PaymentStatus.DECLINED; 
           }
         }
       }
@@ -88,9 +72,7 @@ export class PaymentServiceAdapter implements PaymentService {
     }
   }
 
-  /**
-   *  NUEVO: Validar tarjetas de prueba
-   */
+
   private validateTestCard(cardNumber: string): { isTestCard: boolean; expectedResult: string } {
     const cleanNumber = cardNumber.replace(/\s/g, '');
     
@@ -114,9 +96,6 @@ export class PaymentServiceAdapter implements PaymentService {
     };
   }
 
-  /**
-   *  MEJORADO: Consultar estado de pago con mejor error handling
-   */
   async getPaymentStatus(providerTransactionId: string): Promise<PaymentResult> {
     try {
       console.log('🔍 PaymentAdapter: Checking payment status for:', providerTransactionId);
@@ -144,9 +123,7 @@ export class PaymentServiceAdapter implements PaymentService {
     }
   }
 
-  /**
-   *  MÉTODO: Obtener información de acceptance token
-   */
+  
   async getAcceptanceTokenInfo() {
     try {
       const merchantInfo = await this.paymentProvider.getAcceptanceToken();
@@ -163,16 +140,12 @@ export class PaymentServiceAdapter implements PaymentService {
     }
   }
 
-  /**
-   * Generar referencia única
-   */
+
   generateReference(transactionId: number): string {
     return this.paymentProvider.generateReference(transactionId);
   }
 
-  /**
-   * ✅ MEJORADO: Mapear respuesta del proveedor con mejor lógica
-   */
+ 
   private mapProviderResponseToDomain(
     providerResponse: any, 
     reference: string
@@ -185,12 +158,10 @@ export class PaymentServiceAdapter implements PaymentService {
       hasMessage: !!data.status_message,
     });
 
-    // ✅ LÓGICA MEJORADA: Mapear estados más específicamente
     let success = false;
-    let status: PaymentStatus; // ✅ Usar tipo enum
+    let status: PaymentStatus; 
     let message = data.status_message || 'No message provided';
 
-    // ✅ MAPEO CORRECTO: Convertir strings a enum values
     switch (data.status) {
       case 'APPROVED':
         success = true;
@@ -228,7 +199,6 @@ export class PaymentServiceAdapter implements PaymentService {
         message = message || 'Payment was cancelled';
         break;
       default:
-        // Estado desconocido
         console.warn('⚠️ Unknown payment status received:', data.status);
         success = false;
         status = PaymentStatus.ERROR;

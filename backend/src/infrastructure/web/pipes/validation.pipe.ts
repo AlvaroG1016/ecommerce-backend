@@ -26,8 +26,7 @@ export class ValidationPipe implements PipeTransform<any> {
         Object.values(error.constraints || {}).join(', ')
       );
 
-      // ✅ El pipe sigue lanzando BadRequestException
-      // El filter lo captura y lo convierte a ApiResponse
+    
       throw new BadRequestException({
         message: 'Validation failed',
         errors: errorMessages,

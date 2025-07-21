@@ -14,7 +14,6 @@ export interface ApiResponseDto<T = any> {
 }
 
 export class ApiResponse {
-  // ✅ Para cuando todo sale bien
   static success<T = any>(data: T, metadata?: any): ApiResponseDto<T> {
     return {
       success: true,
@@ -26,7 +25,6 @@ export class ApiResponse {
     };
   }
 
-  // ✅ Para cuando algo sale mal
   static error(message: string, code?: string, metadata?: any): ApiResponseDto<any> {
     return {
       success: false,

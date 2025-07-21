@@ -4,7 +4,11 @@ import {
   IsString, 
   Matches, 
   Length,
-   
+  IsOptional,
+  IsNumber,
+  IsIn,
+  Min,
+  Max
 } from 'class-validator';
 
 export class ProcessPaymentWebDto {
@@ -30,7 +34,6 @@ export class ProcessPaymentWebDto {
   cardExpMonth: string;
 
   @IsNotEmpty({ message: 'Expiration year is required' })
-  
   cardExpYear: string;
 
   @IsNotEmpty({ message: 'Card holder name is required' })
@@ -41,6 +44,19 @@ export class ProcessPaymentWebDto {
   @Matches(/^[a-zA-Z\s]+$/, { 
     message: 'Card holder name can only contain letters and spaces' 
   })
-  @Transform(({ value }) => value?.trim().replace(/\s+/g, ' ')) // Normalizar espacios
+  @Transform(({ value }) => value?.trim().replace(/\s+/g, ' ')) 
   cardHolder: string;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'Installments must be a number' })
+  @Min(1, { message: 'Installments must be at least 1' })
+  @Max(36, { message: 'Installments cannot exceed 36' })
+  @IsIn([1, 3, 6, 9, 12, 18, 24, 36], { 
+    message: 'Installments must be one of: 1, 3, 6, 9, 12, 18, 24, 36' 
+  })
+  @Transform(({ value }) => {
+    const parsed = parseInt(value);
+    return isNaN(parsed) ? 1 : parsed; 
+  })
+  installments?: number;
 }

@@ -150,7 +150,6 @@ export class CreateTransactionUseCase {
   }
 
   private async getOrCreateCustomer(customerData: CreateTransactionRequest['customer']): Promise<Result<Customer>> {
-    // ✅ Wrap database calls in Result
     const findResult = await this.safeAsyncCall(
       () => this.customerRepository.findByEmail(customerData.email),
       'Failed to find customer by email'
@@ -165,7 +164,6 @@ export class CreateTransactionUseCase {
       return Result.success(existingCustomer);
     }
 
-    // Create new customer
     const createCustomerResult = this.createCustomer(customerData);
     if (!createCustomerResult.isSuccess) {
       return Result.failure(createCustomerResult.error!);
@@ -208,7 +206,7 @@ export class CreateTransactionUseCase {
   private createDelivery(deliveryData: CreateTransactionRequest['delivery']): Result<Delivery> {
     try {
       const delivery = Delivery.create({
-        transactionId: 0, // Will be assigned later
+        transactionId: 0, 
         address: deliveryData.address,
         city: deliveryData.city,
         postalCode: deliveryData.postalCode,
@@ -277,7 +275,6 @@ export class CreateTransactionUseCase {
     );
   }
 
-  // ✅ Helper method to wrap async calls safely
   private async safeAsyncCall<T>(
     operation: () => Promise<T>,
     errorMessage: string

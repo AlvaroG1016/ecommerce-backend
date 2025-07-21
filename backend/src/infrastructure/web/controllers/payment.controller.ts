@@ -34,7 +34,6 @@ export class PaymentController {
     @Body() paymentData: ProcessPaymentWebDto,
   ): Promise<ApiResponseDto> {
     try {
-      // 1. Prepare request
       const request = {
         transactionId,
         cardNumber: paymentData.cardNumber,
@@ -42,8 +41,10 @@ export class PaymentController {
         cardExpMonth: paymentData.cardExpMonth,
         cardExpYear: paymentData.cardExpYear,
         cardHolder: paymentData.cardHolder,
-      };
+        installments: paymentData.installments || 1,
 
+      };
+      debugger
       const result =
         await this.paymentApplicationService.processPayment(request);
 

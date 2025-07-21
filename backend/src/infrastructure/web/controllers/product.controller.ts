@@ -1,4 +1,3 @@
-// 📁 src/web/controllers/product.controller.ts (REFACTORIZADO)
 import {
   Controller,
   Get,
@@ -10,7 +9,6 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 
-// Application Layer
 
 import { HttpExceptionFilter } from '../filters/http-exception.filter';
 import { ApiResponseDto } from 'src/application/dto/response/api-response.dto';
@@ -30,17 +28,14 @@ export class ProductController {
   @HttpCode(HttpStatus.OK)
   async getProducts(@Query() queryParams: GetProductsQueryDto): Promise<ApiResponseDto> {
     try {
-      // 1. Convert query params to application request
       const request = {
         availableOnly: queryParams.availableOnly,
         limit: queryParams.limit,
         offset: queryParams.offset,
       };
 
-      // 2. Execute through application service
       const result = await this.productApplicationService.getProducts(request);
 
-      // 3. ✅ Handle result with ResponseBuilder
       if (!result.success) {
         return this.responseBuilder.buildError(
           result.error!,
@@ -53,7 +48,6 @@ export class ProductController {
         );
       }
 
-      // 4. ✅ Transform data for frontend
       const responseData = {
         products: result.data!.products.map(product => ({
           id: product.id,
@@ -76,7 +70,6 @@ export class ProductController {
         },
       };
 
-      // 5. ✅ Success response
       return this.responseBuilder.buildSuccess(
         responseData,
         `Retrieved ${result.data!.products.length} products successfully`,
@@ -87,7 +80,6 @@ export class ProductController {
       );
 
     } catch (error) {
-      // 6. ✅ Handle unexpected errors
       return this.responseBuilder.buildUnexpectedError(
         error,
         'ProductController.getProducts'
@@ -99,10 +91,8 @@ export class ProductController {
   @HttpCode(HttpStatus.OK)
   async getProductById(@Param('id', ParseIntPipe) productId: number): Promise<ApiResponseDto> {
     try {
-      // 1. Execute through application service
       const result = await this.productApplicationService.getProductById(productId);
 
-      // 2. ✅ Handle result with ResponseBuilder
       if (!result.success) {
         const isNotFound = result.error!.includes('not found');
         
@@ -119,7 +109,6 @@ export class ProductController {
         );
       }
 
-      // 3. ✅ Transform data for frontend
       const product = result.data!.product;
       const responseData = {
         id: product.id,
@@ -135,7 +124,6 @@ export class ProductController {
         updatedAt: product.updatedAt,
       };
 
-      // 4. ✅ Success response
       return this.responseBuilder.buildSuccess(
         responseData,
         `Product ${product.name} retrieved successfully`,
@@ -146,7 +134,6 @@ export class ProductController {
       );
 
     } catch (error) {
-      // 5. ✅ Handle unexpected errors
       return this.responseBuilder.buildUnexpectedError(
         error,
         'ProductController.getProductById',

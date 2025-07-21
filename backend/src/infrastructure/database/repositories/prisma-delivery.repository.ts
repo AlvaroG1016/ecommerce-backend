@@ -56,13 +56,11 @@ export class PrismaDeliveryRepository implements DeliveryRepository {
     let savedDelivery;
     
     if (delivery.id === 0) {
-      // Crear nueva entrega
       const { id, ...createData } = data;
       savedDelivery = await this.prisma.delivery.create({
         data: createData,
       });
     } else {
-      // Actualizar entrega existente
       savedDelivery = await this.prisma.delivery.update({
         where: { id: delivery.id },
         data,

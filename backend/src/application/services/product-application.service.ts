@@ -35,7 +35,7 @@ export class ProductApplicationService {
         };
       }
 
-      this.logger.log(`✅ Retrieved ${result.value!.products.length} products`);
+      this.logger.log(` Retrieved ${result.value!.products.length} products`);
 
       return {
         success: true,

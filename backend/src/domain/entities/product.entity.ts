@@ -12,7 +12,6 @@ export class Product {
     public readonly updatedAt: Date = new Date(),
   ) {}
 
-  // Métodos de dominio (lógica de negocio)
   
   public isAvailable(): boolean {
     return this.isActive && this.stock > 0;
@@ -41,12 +40,12 @@ export class Product {
       this.baseFee,
       this.isActive,
       this.createdAt,
-      new Date(), // updatedAt
+      new Date(), 
     );
   }
 
   public isExpensive(): boolean {
-    return this.price > 1000000; // Mayor a 1 millón COP
+    return this.price > 1000000; 
   }
 
   // Factory methods
@@ -60,7 +59,7 @@ export class Product {
     baseFee: number;
   }): Product {
     return new Product(
-      0, // ID será asignado por la base de datos
+      0,
       data.name,
       data.description,
       data.price,
@@ -96,7 +95,6 @@ export class Product {
     );
   }
 
-  // Serialización
   
   public toPrimitive(): {
     id: number;

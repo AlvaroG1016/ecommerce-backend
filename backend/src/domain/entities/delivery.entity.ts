@@ -18,7 +18,6 @@ export class Delivery {
     public readonly updatedAt: Date = new Date(),
   ) {}
 
-  // Métodos de dominio
   
   public isPending(): boolean {
     return this.status === DeliveryStatus.PENDING;
@@ -45,7 +44,6 @@ export class Delivery {
   }
 
   public calculateDeliveryFeeBasedOnCity(): number {
-    // Lógica de negocio para calcular fee por ciudad
     const cityFees: Record<string, number> = {
       'bogota': 5000,
       'medellin': 7000,
@@ -55,7 +53,7 @@ export class Delivery {
     };
 
     const normalizedCity = this.city.toLowerCase().trim();
-    return cityFees[normalizedCity] || 15000; // Fee por defecto para otras ciudades
+    return cityFees[normalizedCity] || 15000; 
   }
 
   public markAsAssigned(): Delivery {
@@ -73,7 +71,7 @@ export class Delivery {
       this.deliveryFee,
       DeliveryStatus.ASSIGNED,
       this.createdAt,
-      new Date(), // updatedAt
+      new Date(), 
     );
   }
 

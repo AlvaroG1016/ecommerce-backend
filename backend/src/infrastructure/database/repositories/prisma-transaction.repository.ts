@@ -90,7 +90,6 @@ export class PrismaTransactionRepository implements TransactionRepository {
     let savedTransaction;
     
     if (transaction.id === 0) {
-      // Crear nueva transacción
       const { id, ...createData } = data;
       savedTransaction = await this.prisma.transaction.create({
         data: createData,
@@ -101,7 +100,6 @@ export class PrismaTransactionRepository implements TransactionRepository {
         },
       });
     } else {
-      // Actualizar transacción existente
       savedTransaction = await this.prisma.transaction.update({
         where: { id: transaction.id },
         data,
@@ -138,7 +136,6 @@ export class PrismaTransactionRepository implements TransactionRepository {
     });
   }
 
-  // Mappers entre Domain y Persistence
   
   private toDomain(prismaTransaction: any): Transaction {
     return Transaction.fromPersistence({

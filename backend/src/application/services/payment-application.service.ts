@@ -69,7 +69,7 @@ export class PaymentApplicationService {
 
       const statusResponse = statusResult.value!;
 
-      this.logger.log(`✅ Retrieved transaction status`, {
+      this.logger.log(`Retrieved transaction status`, {
         transactionId,
         status: statusResponse.transaction.status,
         statusChanged: statusResponse.paymentStatus.statusChanged,
@@ -77,7 +77,7 @@ export class PaymentApplicationService {
 
       // update stock if status changed and transaction is completed
       if (this.shouldUpdateStock(statusResponse)) {
-        this.logger.log(`🔄 Payment completed for transaction ${transactionId}, updating product stock...`);
+        this.logger.log(` Payment completed for transaction ${transactionId}, updating product stock...`);
         
         const stockUpdateResult = await this.handleStockUpdate(transactionId);
         
@@ -88,7 +88,7 @@ export class PaymentApplicationService {
           );
           this.logger.warn(`⚠️ Stock update failed but payment process continues normally`);
         } else {
-          this.logger.log(`✅ Product stock updated successfully for transaction ${transactionId}`);
+          this.logger.log(` Product stock updated successfully for transaction ${transactionId}`);
         }
       }
 

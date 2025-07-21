@@ -75,7 +75,7 @@ export class ProcessPaymentUseCase {
     }
 
     const paymentResponse = paymentResult.value!;
-    this.logPaymentResult(paymentResponse, transaction.id);
+  this.logPaymentResult(paymentResponse, transaction.id); 
 
     const transactionUpdateResult = await this.updateTransactionWithPaymentResult(
       transaction,
@@ -146,6 +146,8 @@ export class ProcessPaymentUseCase {
       cardExpYear: request.cardExpYear,
       cardHolder: request.cardHolder,
       cardBrand: cardBrand as any,
+          installments: request.installments || 1,
+
     };
 
     console.log('🔄 Sending payment request to adapter...');
@@ -415,32 +417,45 @@ export class ProcessPaymentUseCase {
 
   
   private validateRequest(request: ProcessPaymentRequest): Result<void> {
-    if (!request.transactionId || request.transactionId <= 0) {
-      return Result.failure(new Error('Valid transaction ID is required'));
-    }
-
-    if (!request.cardNumber?.trim()) {
-      return Result.failure(new Error('Card number is required'));
-    }
-
-    if (!request.cardCvc?.trim()) {
-      return Result.failure(new Error('Card CVC is required'));
-    }
-
-    if (!request.cardExpMonth?.trim()) {
-      return Result.failure(new Error('Card expiration month is required'));
-    }
-
-    if (!request.cardExpYear?.trim()) {
-      return Result.failure(new Error('Card expiration year is required'));
-    }
-
-    if (!request.cardHolder?.trim()) {
-      return Result.failure(new Error('Card holder name is required'));
-    }
-
-    return Result.success(undefined);
+  if (!request.transactionId || request.transactionId <= 0) {
+    return Result.failure(new Error('Valid transaction ID is required'));
   }
+
+  if (!request.cardNumber?.trim()) {
+    return Result.failure(new Error('Card number is required'));
+  }
+
+  if (!request.cardCvc?.trim()) {
+    return Result.failure(new Error('Card CVC is required'));
+  }
+
+  if (!request.cardExpMonth?.trim()) {
+    return Result.failure(new Error('Card expiration month is required'));
+  }
+
+  if (!request.cardExpYear?.trim()) {
+    return Result.failure(new Error('Card expiration year is required'));
+  }
+
+  if (!request.cardHolder?.trim()) {
+    return Result.failure(new Error('Card holder name is required'));
+  }
+
+  if (request.installments !== undefined) {
+    const installments = parseInt(String(request.installments));
+    const validInstallments = [1, 3, 6, 9, 12, 18, 24, 36];
+    
+    if (isNaN(installments) || installments < 1) {
+      return Result.failure(new Error('Installments must be a positive number'));
+    }
+    
+    if (!validInstallments.includes(installments)) {
+      return Result.failure(new Error(`Invalid installments. Allowed values: ${validInstallments.join(', ')}`));
+    }
+  }
+
+  return Result.success(undefined);
+}
 
   private validateCanProcess(transaction: Transaction): Result<void> {
     if (!transaction.canBeProcessed()) {

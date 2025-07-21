@@ -47,13 +47,11 @@ export class PrismaCustomerRepository implements CustomerRepository {
     let savedCustomer;
     
     if (customer.id === 0) {
-      // Crear nuevo cliente
       const { id, ...createData } = data;
       savedCustomer = await this.prisma.customer.create({
         data: createData,
       });
     } else {
-      // Actualizar cliente existente
       savedCustomer = await this.prisma.customer.update({
         where: { id: customer.id },
         data,
@@ -77,7 +75,6 @@ export class PrismaCustomerRepository implements CustomerRepository {
     return !!customer;
   }
 
-  // Mappers entre Domain y Persistence
   
   private toDomain(prismaCustomer: any): Customer {
     return Customer.fromPersistence({

@@ -2,13 +2,11 @@ import { Module } from '@nestjs/common';
 import { TransactionController } from './controllers/transaction.controller';
 import { CreateTransactionUseCase } from '../../application/use-cases/create-transaction/create-transaction.use-case';
 
-// Repository implementations
 import { PrismaTransactionRepository } from '../database/repositories/prisma-transaction.repository';
 import { PrismaCustomerRepository } from '../database/repositories/prisma-customer.repository';
 import { PrismaProductRepository } from '../database/repositories/prisma-product.repository';
 import { PrismaDeliveryRepository } from '../database/repositories/prisma-delivery.repository';
 
-// Repository interfaces (symbols)
 import { TRANSACTION_REPOSITORY } from '../../domain/repositories/transaction.repository';
 import { CUSTOMER_REPOSITORY } from '../../domain/repositories/customer.repository';
 import { PRODUCT_REPOSITORY } from '../../domain/repositories/product.repository';
@@ -18,10 +16,8 @@ import { TransactionApplicationService } from 'src/application/services/transact
 @Module({
   controllers: [TransactionController],
   providers: [
-    // Use Cases
     CreateTransactionUseCase,
     
-    // Application Services
     TransactionApplicationService,
     
     // Repository implementations (Dependency Injection)

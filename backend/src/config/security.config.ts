@@ -17,12 +17,12 @@ export const getSecurityConfig = (): SecurityConfig => {
   
   return {
     rateLimit: {
-      enabled: isProduction, // ✅ Solo en producción
-      windowMs: 15 * 60 * 1000, // 15 minutos
-      max: 100, // 100 requests por ventana
+      enabled: isProduction, 
+      windowMs: 15 * 60 * 1000, 
+      max: 100, 
     },
     helmet: {
-      enabled: isProduction, // ✅ Solo en producción
+      enabled: isProduction, 
     },
     cors: {
       origins: isProduction 

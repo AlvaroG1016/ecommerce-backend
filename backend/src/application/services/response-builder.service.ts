@@ -22,10 +22,8 @@ export class ResponseBuilderService {
       [key: string]: any;
     }
   ): ApiResponseDto {
-    // Log success
     this.logger.log(`✅ ${message}`);
 
-    // Default metadata
     const defaultMetadata = {
       nextStep: 'CONTINUE',
       recommendation: 'Operation completed successfully',
@@ -55,15 +53,12 @@ export class ResponseBuilderService {
       [key: string]: any;
     }
   ): ApiResponseDto {
-    // Extract error message
     const errorMessage = error instanceof Error ? error.message : error;
     
-    // Log error with context
     this.logger.error(`❌ ${context}: ${errorMessage}`, {
       stack: error instanceof Error ? error.stack : undefined,
     });
 
-    // Default metadata
     const defaultMetadata = {
       nextStep: 'RETRY_OPERATION',
       recommendation: 'Please try again or contact support',
@@ -87,7 +82,6 @@ export class ResponseBuilderService {
     context: string,
     additionalInfo?: any
   ): ApiResponseDto {
-    // Complete log for debugging
     this.logger.error(`❌ Unexpected error in ${context}: ${error.message}`, {
       stack: error.stack,
       ...additionalInfo,
@@ -125,7 +119,6 @@ export class ResponseBuilderService {
     
     for (const [key, value] of Object.entries(obj)) {
       if (value && typeof value === 'object') {
-        // If it has toString() method and seems to be Decimal, convert to number
         if ('toString' in value && typeof value.toString === 'function') {
           const stringVal = value.toString();
           if (!isNaN(Number(stringVal))) {
@@ -133,7 +126,6 @@ export class ResponseBuilderService {
             continue;
           }
         }
-        // If it's nested object, apply recursion
         result[key] = this.convertEntityToJson(value);
       } else {
         result[key] = value;
@@ -153,7 +145,6 @@ export class ResponseBuilderService {
     message: string,
     metadata?: any
   ): ApiResponseDto {
-    // Convert entities automatically
     const convertedData = this.convertEntityToJson(entities);
     
     return this.buildSuccess(convertedData, message, metadata);

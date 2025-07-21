@@ -1,4 +1,3 @@
-// 📁 src/web/dto/get-products-query.dto.ts (NUEVO)
 import { Transform, Type } from 'class-transformer';
 import { IsOptional, IsBoolean, IsNumber, Min, Max } from 'class-validator';
 import { ProductApplicationService } from 'src/application/services/product-application.service';

@@ -63,13 +63,11 @@ export class PrismaProductRepository implements ProductRepository {
     let savedProduct;
     
     if (product.id === 0) {
-      // Crear nuevo producto
       const { id, ...createData } = data;
       savedProduct = await this.prisma.product.create({
         data: createData,
       });
     } else {
-      // Actualizar producto existente
       savedProduct = await this.prisma.product.update({
         where: { id: product.id },
         data,
@@ -85,7 +83,6 @@ export class PrismaProductRepository implements ProductRepository {
     });
   }
 
-  // Mappers entre Domain y Persistence
   
   private toDomain(prismaProduct: any): Product {
     return Product.fromPersistence({

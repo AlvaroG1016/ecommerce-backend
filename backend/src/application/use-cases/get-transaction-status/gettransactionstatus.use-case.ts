@@ -51,7 +51,6 @@ export class GetTransactionStatusUseCase {
       const updateResult = await this.updateTransaction(updatedTransaction);
       if (!updateResult.isSuccess) {
         console.error(`❌ Failed to update transaction: ${updateResult.error?.message}`);
-        // dont faile the process, use the transaction without updating
       } else {
         finalTransaction = updateResult.value!;
       }
